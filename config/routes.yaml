@@ -7,5 +7,15 @@
 # To list all registered routes, run the following command:
 #   bin/console debug:router
 
+login_check:
+    path: /login_check
+    methods: [POST]
+
+logout:
+    path: /logout
+
 controllers:
-    resource: routing.controllers
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute

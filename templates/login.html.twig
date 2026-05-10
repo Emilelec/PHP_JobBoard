@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+{% block title %}Login — JobBoard{% endblock %}
+{% block body %}
+<div class="container" style="max-width:420px;margin-top:5rem">
+    <div class="card">
+        <h2 style="margin-bottom:1.5rem;text-align:center">Sign in</h2>
+        {% if error %}
+            <div class="alert alert-error">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+        {% endif %}
+        <form method="post" action="/login_check">
+            <label>Email</label>
+            <input type="email" name="email" value="{{ last_username }}" required autofocus>
+            <label>Password</label>
+            <input type="password" name="password" required>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+            <button class="btn btn-primary" style="width:100%" type="submit">Login</button>
+        </form>
+        <p style="margin-top:1rem;text-align:center;font-size:.9rem;color:#666">
+            No account? <a href="/register">Register</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

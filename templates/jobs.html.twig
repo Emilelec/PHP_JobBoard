@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+{% block title %}Job Board{% endblock %}
+{% block body %}
+<div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+        <h2>Open positions</h2>
+        {% if app.user.role == 'employer' %}
+            <button class="btn btn-success" onclick="showPostForm()">+ Post a job</button>
+        {% endif %}
+    </div>
+
+    {% if app.user.role == 'employer' %}
+    <div id="post-form" class="card" style="display:none">
+        <h3 style="margin-bottom:1rem">New job posting</h3>
+        <label>Title</label><input id="f-title" placeholder="e.g. Backend Developer">
+        <label>Location</label><input id="f-location" placeholder="e.g. Paris">
+        <label>Salary (€)</label><input id="f-salary" type="number" placeholder="e.g. 45000">
+        <label>Description</label>
+        <textarea id="f-desc" rows="4"></textarea>
+        <button class="btn btn-primary" onclick="postJob()">Publish</button>
+        <button class="btn" style="margin-left:.5rem;background:#eee" onclick="document.getElementById('post-form').style.display='none'">Cancel</button>
+    </div>
+    {% endif %}
+
+    <div id="alert"></div>
+    <div id="jobs-list"><p>Loading...</p></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function loadJobs() {
+    const res = await fetch('/api/jobs');
+    const jobs = await res.json();
+    const list = document.getElementById('jobs-list');
+    if (!jobs.length) { list.innerHTML = '<p style="color:#888">No open positions yet.</p>'; return; }
+    list.innerHTML = jobs.map(job => `
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div>
+                    <h3>${job.title}</h3>
+                    <p style="color:#666;margin:.3rem 0">${job.employer}</p>
+                    <span class="tag">📍 ${job.location}</span>
+                    ${job.salary ? `<span class="salary" style="margin-left:.5rem">€${job.salary.toLocaleString()}</span>` : ''}
+                </div>
+                {% if app.user.role == 'candidate' %}
+                <button class="btn btn-success" onclick="apply(${job.id}, this)">Apply</button>
+                {% endif %}
+            </div>
+            <p style="margin-top:1rem;color:#444;line-height:1.6">${job.description}</p>
+        </div>
+    `).join('');
+}
+
+async function apply(id, btn) {
+    btn.disabled = true;
+    btn.textContent = 'Applying...';
+    const res = await fetch(`/api/jobs/${id}/apply`, { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+        btn.textContent = '✓ Applied';
+        btn.style.background = '#95a5a6';
+    } else {
+        btn.disabled = false;
+        btn.textContent = 'Apply';
+        document.getElementById('alert').innerHTML = `<div class="alert alert-error">${data.error}</div>`;
+    }
+}
+
+function showPostForm() {
+    document.getElementById('post-form').style.display = 'block';
+}
+
+async function postJob() {
+    const res = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            title: document.getElementById('f-title').value,
+            location: document.getElementById('f-location').value,
+            salary: parseInt(document.getElementById('f-salary').value) || null,
+            description: document.getElementById('f-desc').value,
+        })
+    });
+    if (res.ok) {
+        document.getElementById('post-form').style.display = 'none';
+        loadJobs();
+    } else {
+        const data = await res.json();
+        document.getElementById('alert').innerHTML = `<div class="alert alert-error">${data.error}</div>`;
+    }
+}
+
+loadJobs();
+</script>
+{% endblock %}

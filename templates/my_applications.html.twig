@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+{% block title %}My Applications — JobBoard{% endblock %}
+{% block body %}
+<div class="container">
+    <h2 style="margin-bottom:1.5rem">My Applications</h2>
+    <div id="alert"></div>
+    <div id="applications-list"><p>Loading...</p></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function loadApplications() {
+    const res = await fetch('/api/applications');
+    const apps = await res.json();
+    const list = document.getElementById('applications-list');
+
+    if (!apps.length) {
+        list.innerHTML = '<p style="color:#888">You have not applied to any jobs yet. <a href="/jobs">Browse jobs</a></p>';
+        return;
+    }
+
+    const statusColor = { pending: '#f39c12', accepted: '#2ecc71', rejected: '#e74c3c' };
+
+    list.innerHTML = apps.map(app => `
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <h3>${app.job}</h3>
+                    <p style="color:#666;margin:.3rem 0">${app.employer}</p>
+                    <span class="tag">${app.location}</span>
+                </div>
+                <div style="text-align:right">
+                    <span style="
+                        display:inline-block;
+                        padding:.3rem .8rem;
+                        border-radius:20px;
+                        font-size:.85rem;
+                        font-weight:600;
+                        background:${statusColor[app.status]}22;
+                        color:${statusColor[app.status]};
+                        border:1px solid ${statusColor[app.status]}44;
+                    ">${app.status}</span>
+                    <p style="color:#999;font-size:.8rem;margin-top:.3rem">${new Date(app.createdAt).toLocaleDateString()}</p>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+loadApplications();
+</script>
+{% endblock %}

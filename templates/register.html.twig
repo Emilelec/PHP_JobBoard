@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+{% block title %}Register — JobBoard{% endblock %}
+{% block body %}
+<div class="container" style="max-width:420px;margin-top:5rem">
+    <div class="card">
+        <h2 style="margin-bottom:1.5rem;text-align:center">Create account</h2>
+        <div id="alert"></div>
+        <label>Email</label>
+        <input type="email" id="email" placeholder="you@example.com">
+        <label>Password</label>
+        <input type="password" id="password">
+        <label>I am a</label>
+        <select id="role" style="width:100%;padding:.7rem;border:1px solid #ddd;border-radius:6px;font-size:1rem;margin-bottom:1rem">
+            <option value="candidate">Candidate</option>
+            <option value="employer">Employer</option>
+        </select>
+        <button class="btn btn-primary" style="width:100%" onclick="register()">Register</button>
+        <p style="margin-top:1rem;text-align:center;font-size:.9rem;color:#666">
+            Already have an account? <a href="/login">Login</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function register() {
+    const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+            role: document.getElementById('role').value,
+        })
+    });
+    const data = await res.json();
+    if (res.ok) {
+        window.location.href = '/login';
+    } else {
+        document.getElementById('alert').innerHTML = `<div class="alert alert-error">${data.error}</div>`;
+    }
+}
+</script>
+{% endblock %}

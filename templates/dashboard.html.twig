@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+{% block title %}Dashboard — JobBoard{% endblock %}
+{% block body %}
+<div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+        <h2>My Job Postings</h2>
+        <a href="/jobs" class="btn btn-success">+ Post a job</a>
+    </div>
+    <div id="alert"></div>
+    <div id="dashboard-list"><p>Loading...</p></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function loadDashboard() {
+    const jobsRes = await fetch('/api/jobs/mine');
+    const jobs = await jobsRes.json();
+    const list = document.getElementById('dashboard-list');
+
+    if (!jobs.length) {
+        list.innerHTML = '<p style="color:#888">You have not posted any jobs yet. <a href="/jobs">Post one now</a></p>';
+        return;
+    }
+
+    list.innerHTML = jobs.map(job => `
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div>
+                    <h3>${job.title}</h3>
+                    <span class="tag"> ${job.location}</span>
+                    ${job.salary ? `<span class="salary" style="margin-left:.5rem">€${job.salary.toLocaleString()}</span>` : ''}
+                    <span class="tag" style="margin-left:.3rem">${job.status}</span>
+                </div>
+                <div style="text-align:right">
+                    <span style="font-size:1.5rem;font-weight:700;color:#1a1a2e">${job.applicationCount}</span>
+                    <p style="color:#888;font-size:.85rem">application${job.applicationCount !== 1 ? 's' : ''}</p>
+                </div>
+            </div>
+            <p style="margin-top:.8rem;color:#444;line-height:1.6">${job.description}</p>
+            ${job.applicationCount > 0 ? `
+            <div style="margin-top:1rem;border-top:1px solid #eee;padding-top:1rem">
+                <p style="font-weight:500;margin-bottom:.5rem">Applicants</p>
+                <div id="applicants-${job.id}"><button class="btn" style="background:#eee;font-size:.85rem" onclick="loadApplicants(${job.id})">View applicants</button></div>
+            </div>` : ''}
+        </div>
+    `).join('');
+}
+
+async function loadApplicants(jobId) {
+    const res = await fetch(`/api/jobs/${jobId}/applications`);
+    const apps = await res.json();
+    const container = document.getElementById(`applicants-${jobId}`);
+    const statusColor = { pending: '#f39c12', accepted: '#2ecc71', rejected: '#e74c3c' };
+    container.innerHTML = apps.map(a => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid #f0f0f0">
+            <span>${a.candidate}</span>
+            <span style="
+                padding:.2rem .6rem;
+                border-radius:20px;
+                font-size:.8rem;
+                font-weight:600;
+                background:${statusColor[a.status]}22;
+                color:${statusColor[a.status]};
+            ">${a.status}</span>
+        </div>
+    `).join('');
+}
+
+loadDashboard();
+</script>
+{% endblock %}
